@@ -75,11 +75,18 @@ public class LoadGenMapper extends Mapper<LongWritable, Text, NullWritable, Null
             outputFilePath = matcher.group(2);
         }
 
-        fs = FileSystem.get(conf);
+        fs = FileSystem.newInstance(conf);
 
         Path file = new Path(outputFilePath+"/"+InetAddress.getLocalHost().getHostName() + "_" + Thread.currentThread().getId() + "_" + UUID.randomUUID().toString());
         os = fs.create(file, true, FILE_IO_BUF_SIZE);
         bos = new BufferedOutputStream(os, FILE_IO_BUF_SIZE);
+    }
+    
+    @Override
+    protected void cleanup(Mapper<LongWritable,Text,NullWritable,NullWritable>.Context context) throws IOException ,InterruptedException {
+    	bos.close();
+    	os.close();
+    	fs.close();
     }
 
     @Override
