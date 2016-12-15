@@ -34,7 +34,7 @@ import org.apache.hadoop.util.Tool;
 
 public class LoadGen extends Configured implements Tool {
     public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
+        if (args.length < 4) {
             System.err.println("args: <output_hdfs_path> <bytes_per_line_to_generate> <load_gen_period_in_minutes> <number_of_mappers>");
             System.exit(1);
         }
