@@ -41,7 +41,7 @@ public class LoadGenRecordReader extends RecordReader<LongWritable, Text> {
 
     @Override
      public void initialize(InputSplit split, TaskAttemptContext ctx) throws IOException, InterruptedException {
-        mins = ctx.getConfiguration().getInt("LOAD_MIN", 0);
+        mins = ctx.getConfiguration().getInt("LOAD_MINS", 0);
         lineSize = ctx.getConfiguration().getInt("LINE_BYTES", 0);
         startTime = System.currentTimeMillis();
     }
