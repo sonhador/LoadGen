@@ -38,6 +38,8 @@ public class LoadGen extends Configured implements Tool {
             System.err.println("args: <output_hdfs_path> <bytes_per_line_to_generate> <load_gen_period_in_minutes> <number_of_mappers>");
             System.exit(1);
         }
+        
+        ToolRunner.run(new Configuration(), new LoadGen(), args);
     }
 
     public int run(String[] args) throws Exception {
