@@ -16,9 +16,14 @@ import org.apache.hadoop.util.ToolRunner;
   */
 
 public class FileGen extends Configured implements Tool {
+	public enum FILE_CLOSE_TYPE {
+		immediate_close,
+		delayed_close
+	}
+	
 	public static void main(String[] args) throws Exception {
         if (args.length < 4) {
-            System.err.println("args: <output_hdfs_path> <bytes_per_file_to_generate> <number_of_files_to_generate_per_mapper> <number_of_mappers>");
+            System.err.println("args: <output_hdfs_path> <bytes_per_file_to_generate> <number_of_files_to_generate_per_mapper> <number_of_mappers> <immediate_close|delayed_close> <mapper_mb>");
             System.exit(1);
         }
         
@@ -29,13 +34,14 @@ public class FileGen extends Configured implements Tool {
         Configuration conf = new Configuration(getConf());
 
         conf.set("yarn.app.mapreduce.am.commands-opts", "-Xmx2048m");
-        conf.set("mapreduce.map.memory.mb", "2048");
-        conf.set("mapred.child.java.opts", "-Xmx2000m");
+        conf.setInt("mapreduce.map.memory.mb", Integer.parseInt(args[5]));
+        conf.set("mapred.child.java.opts", "-Xmx"+(Integer.parseInt(args[5])-48)+"m");
 
         conf.set("OUTPUT_PATH", args[0]);
         conf.setInt("FILE_BYTES", Integer.parseInt(args[1]));
         conf.setInt("NUM_FILES", Integer.parseInt(args[2]));
         conf.setInt("MAPPERS", Integer.parseInt(args[3]));
+        conf.setEnum("FILE_CLOSE_TYPE", FILE_CLOSE_TYPE.valueOf(args[4]));
 
         Job job = Job.getInstance(conf, "FileGen");
     

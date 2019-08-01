@@ -19,17 +19,20 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import com.dell.korea.psd.bigdata.mr.filegen.FileGen.FILE_CLOSE_TYPE;
+
 /**
   * @author MongJu Jung(mongju.jung@dell.com)
   * Created on 2019. 7. 31.
   */
 
 public class FileGenMapper extends Mapper<LongWritable, Text, NullWritable, NullWritable> {
-	private static int FILE_IO_BUF_SIZE = 1864088;
+	private static int FILE_IO_BUF_SIZE = 131072;
 	private byte []line;
 	private String outputFilePath;
     private FileSystem fs;
     private List<OutputStream> fileOutputStreams;
+    private FileGen.FILE_CLOSE_TYPE fileCloseType;
 
     private Pattern protocolPathPattern = Pattern.compile("(hdfs://[^/]+)(/.+)");
     
@@ -43,6 +46,7 @@ public class FileGenMapper extends Mapper<LongWritable, Text, NullWritable, Null
         }
 
         outputFilePath = ctx.getConfiguration().get("OUTPUT_PATH");
+        fileCloseType = ctx.getConfiguration().getEnum("FILE_CLOSE_TYPE", FileGen.FILE_CLOSE_TYPE.immediate_close);
 
         Configuration conf = new Configuration();
         Matcher matcher = protocolPathPattern.matcher(outputFilePath);
@@ -73,9 +77,11 @@ public class FileGenMapper extends Mapper<LongWritable, Text, NullWritable, Null
     @Override
     protected void cleanup(Mapper<LongWritable,Text,NullWritable,NullWritable>.Context context) throws IOException ,InterruptedException {
     	try {
-	    	for (OutputStream fileOutputStream : fileOutputStreams) {
-	    		fileOutputStream.close();
-	    	}
+    		if (fileCloseType == FILE_CLOSE_TYPE.delayed_close) {
+		    	for (OutputStream fileOutputStream : fileOutputStreams) {
+		    		fileOutputStream.close();
+		    	}
+    		}
 	    	fs.close();
     	} catch (Throwable e) {
     		// ignore
@@ -85,9 +91,14 @@ public class FileGenMapper extends Mapper<LongWritable, Text, NullWritable, Null
     @Override
     protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, NullWritable, NullWritable>.Context ctx) throws IOException, InterruptedException {
         OutputStream out = createFile();
-        fileOutputStreams.add(out);
-        
     	out.write(line);
+    	
+    	if (fileCloseType == FILE_CLOSE_TYPE.immediate_close) {
+        	out.close();
+        } else {
+        	fileOutputStreams.add(out);
+        }
+    	
         ctx.progress();
     }
 }
